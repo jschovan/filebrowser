@@ -360,3 +360,76 @@ def get_rucio_pfns_from_guids_with_rucio_redirect(guids, site, lfns, scopes):
     return pfnlist, errtxt
 
 
+def get_rucio_pfns_from_guids_with_dq2client(guids, site, lfns, scopes):
+    """ 
+        get_rucio_pfns_from_guids_with_dq2client
+        ... Get the Rucio replica dictionary from DQ2/Rucio client
+    """
+
+    # FORMAT: { guid1: {'surls': [surl1, ..], 'lfn':LFN, 'fsize':FSIZE, 'checksum':CHECKSUM}, ..}
+    # where e.g. LFN='mc10_7TeV:ESD.321628._005210.pool.root.1', FSIZE=110359950 (long integer), CHECKSUM='ad:7bfc5de9'
+    # surl1='srm://srm.grid.sara.nl/pnfs/grid.sara.nl/data/atlas/atlasdatadisk/rucio/mc12_8TeV/cf/8f/EVNT.01365724._000001.pool.root.1'
+    # guid1='28FB7AE9-2234-F644-962A-17EA1D279AA7'
+
+    fileDictionary = {}
+    if len(guids) != len(lfns):
+        return None
+
+    for i in xrange(len(guids)):
+        lfn = lfns[i]
+        ### get scope
+        scope = 'ERROR_failed-to-determine-scope'
+        try:
+            scope = scopes[0]
+        except:
+            _logger.warning('WARNING: get_rucio_pfns_from_guids_with_dq2client: failed to determine scope. Using scope=' % (scope))
+        fileDictionary[guids[i]] = '%s:%s' % (scope, lfn)
+
+    dictionaryReplicas = {}
+    errtxt = ''
+    pfnlist = []
+
+    ### make sure RUCIO_ACCOUNT is in environment
+    get_rucio_account()
+    ### make sure X509_USER_PROXY is in environment
+    get_x509_proxy()
+
+    try:
+        from dq2.filecatalog import create_file_catalog
+        from dq2.filecatalog.FileCatalogException import FileCatalogException
+        from dq2.filecatalog.FileCatalogUnavailable import FileCatalogUnavailable
+
+    except:
+        msg = "Failed to lookup your file! Unfortunately, import of the dq2 modules failed."
+        _logger.error(msg)
+        errtxt += msg
+    else:
+        try:
+            cat = self.getRucioCatalogHost(site)
+            catalog = create_file_catalog(cat)
+            catalog.connect()
+            dictionaryReplicas = catalog.bulkFindReplicas(fileDictionary)
+            catalog.disconnect()
+        except:
+            msg = "Failed to lookup your file! " + \
+                "The catalog was not configured properly with the input " + \
+                "data you provided: guid=%s site=%s lfn=%s scope=%s. " % \
+                (guids, site, lfns, scopes)
+            _logger.error(msg)
+            errtxt += msg
+            msg = "Please note that scope, lfn, and guid are compulsory parameters! "
+            _logger.error(msg)
+            errtxt += msg
+
+    for g in dictionaryReplicas.keys():
+        try:
+            pfnList = dictionaryReplicas[g]['surls']
+            pfnlist.extend(pfnList)
+        except:
+            msg = "Failed to lookup your file! Cannot extract surls for RucioDictionaryReplica of guid:%s" % (g)
+            _logger.error(msg)
+            errtxt += msg
+
+    return pfnlist, errtxt
+
+
