@@ -6,9 +6,11 @@
 {% block extra_js %}{% endblock %}
 {% block gacode %}UA-44940804-1{% endblock %}
 {% block gaweb %}pandawms.org{% endblock %}
-{% block subtitle %}FileBrowser{% if scope %} for file: {{scope}}{% if lfn %}:{{lfn}}{% endif %}{% endif %}
+{% block subtitle %}FileBrowser
+{% if scope %} for <span style="font-weight: bold;">scope</span>={{scope}}
+{% if lfn %} <span style="font-weight: bold;">lfn</span>={{lfn}}{% endif %}{% endif %}
 {% endblock %}
-{% block header-nav-chain-1 %}<a href="{% url 'index' %}">FileBrowser</a>{% endblock %}{% block header-nav-chain-1-separator %}{{ SEPARATOR_NAVIGATION_ITEM|safe }}{% endblock %}
+{% block header-nav-chain-1 %}<a href="#">FileBrowser</a>{% endblock %}{% block header-nav-chain-1-separator %}{{ SEPARATOR_NAVIGATION_ITEM|safe }}{% endblock %}
 {% block header-nav-chain-2 %}{% endblock %}{% block header-nav-chain-2-separator %}{% endblock %}
 {% block header-nav-chain-3 %}{% endblock %}{% block header-nav-chain-3-separator %}{% endblock %}
 {% block header-nav-chain-4 %}{% endblock %}{% block header-nav-chain-4-separator %}{% endblock %}
@@ -17,17 +19,20 @@
 {% block left_menu %}{% endblock %}
 {% block body_mobile %}{% endblock %}
 {% block body %}
-<div>File lookup parameters</div>
-<div class="columns"><ul>
-{% if scope %}<li>Scope: {{scope}}</li>{% endif %}
-{% if lfn %}<li>LFN: {{lfn}}</li>{% endif %}
-{% if site %}<li>Site: {{site}}</li>{% endif %}
-{% if guid %}<li>GUID: {{guid}}</li>{% endif %}
-</ul> 
+<div><span style="color: navy; font-weight: bold;">File lookup parameters</span></div>
+<div><br/>
+<table>
+{% if scope %}<tr><th>Scope</th><td>{{scope}}</td></tr>{% endif %}
+{% if lfn %}<tr><th>LFN</th><td>{{lfn}}</td></tr>{% endif %}
+{% if site %}<tr><th>Site</th><td>{{site}}</td></tr>{% endif %}
+{% if guid %}<tr><th>GUID</th><td>{{guid}}</td></tr>{% endif %}
+</table> 
 </div>
 
-<table>
 {% if files %}
+<div><span style="color: navy; font-weight: bold;">File listing</span></div>
+<br/>
+<table>
 <thead>
 <th>Modification time</th>
 <th>Size</th>
@@ -42,9 +47,11 @@
 </tr>
 {% endfor %}
 </tbody>
-{% else %}
-{{errors}}
-{% endif %}
 </table>
+{% else %}
+{% if errors.missingparameter %}<div><span style="color: red; font-weight: bold;">Query error.</span> {{errors.missingparameter}}</div>{% endif %}
+{% if errors.lookup %}<div><span style="color: red; font-weight: bold;">Lookup error.</span> {{errors.lookup}}</div>{% endif %}
+{% if errors.download %}<div><span style="color: red; font-weight: bold;">Download error.</span> {{errors.download}}</div>{% endif %}
+{% endif %}
 
 {% endblock %}

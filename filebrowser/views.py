@@ -33,34 +33,53 @@ def index(request):
             msg = 'Missing expected GET parameter %s. ' % expectedField
             _logger.error(msg)
 #            print 'error:', msg
-            if 'missing-parameter' not in errors.keys():
-                errors['missing-parameter'] = ''
-            errors['missing-parameter'] += msg
+            if 'missingparameter' not in errors.keys():
+                errors['missingparameter'] = ''
+            errors['missingparameter'] += msg
 
     ### if all expected GET parameters are present, execute file lookup
     pfns = []
+    scope = ''
+    lfn = ''
     guid = ''
-    if 'missing-parameter' not in errors.keys():
+    site = ''
+    try:
         guid = request.GET['guid']
+#        _logger.info('guid=' + guid)
+    except:
+        pass
+    try:
         site = request.GET['site']
+#        _logger.info('site=' + site)
+    except:
+        pass
+    try:
         lfn = request.GET['lfn']
+#        _logger.info('lfn=' + lfn)
+    except:
+        pass
+    try:
         scope = request.GET['scope']
-        _logger.info('guid='+guid)
-        _logger.info('site='+site)
-        _logger.info('lfn='+lfn)
-        _logger.info('scope='+scope)
+#        _logger.info('scope='+scope)
+    except:
+        pass
+
+    if 'missingparameter' not in errors.keys():
         pfns, errtxt = get_rucio_pfns_from_guids(guids=[guid], site=[site], \
                     lfns=[lfn], scopes=[scope])
-        if not len(pfns):
-            msg = 'File lookup failed. [guid=%s, site=%s, scope=%s, lfn=%s]' % \
-                (guid, site, scope, lfn)
-            _logger.warning(msg)
-            errors['lookup'] = msg
+#        if not len(pfns):
+#            msg = 'File lookup failed. [guid=%s, site=%s, scope=%s, lfn=%s]' % \
+#                (guid, site, scope, lfn)
+#            _logger.warning(msg)
+#            errors['lookup'] = msg
         if len(errtxt):
-            if 'lookup' in errors:
-                errors['lookup'] += errtxt
+            if 'lookup' not in errors:
+                errors['lookup'] = ''
+            errors['lookup'] += errtxt
 
     ### download the file
+    files = []
+    dirprefix = ''
     if len(pfns):
         pfn = pfns[0]
         files, errtxt, dirprefix = fetch_file(pfn, guid)

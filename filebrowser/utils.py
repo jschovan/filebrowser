@@ -6,6 +6,7 @@ import commands
 import json
 import logging
 import os
+import re
 import time
 from django.conf import settings
 
@@ -342,7 +343,6 @@ def get_rucio_redirect_response(redirectUrl):
          }
     _logger.info('get_rucio_redirect_response: cmd=(%s)' % cmd)
     status, output = commands.getstatusoutput(cmd)
-    get_lo
     surl = get_location_from_rucio_redirect_output(output)
     return surl
 
@@ -501,13 +501,15 @@ def get_rucio_pfns_from_guids(guids, site, lfns, scopes):
     if len(pfnlist) > 0:
         return pfnlist, errtxt
 
-    errtxt += 'You are out of luck today, file not found. ' \
-            + 'Used search parameters: ' \
-            + 'site=' + str(site) + ' ' \
-            + 'guids=' + str(guids) + ' ' \
-            + 'lfns=' + str(lfns) + ' ' \
-            + 'scopes=' + str(scopes) + ' ' \
-            + errtxt
+#    errtxt += 'You are out of luck today, file not found. ' \
+#            + 'Used search parameters: ' \
+#            + 'site=' + str(site) + ' ' \
+#            + 'guids=' + str(guids) + ' ' \
+#            + 'lfns=' + str(lfns) + ' ' \
+#            + 'scopes=' + str(scopes) + ' ' \
+#            + errtxt
+    errtxt = 'You are out of luck today, file lookup failed. ' + \
+        'We have tried three different ways to find your file, unfortunately with no joy.'
 
     ### default return
     return pfnlist, errtxt
@@ -517,7 +519,10 @@ def execute_cmd(cmd):
     """
         execute_cmd
     """
-    return commands.getstatusoutput(cmd)
+    if len(cmd) > 0:
+        return commands.getstatusoutput(cmd)
+    else:
+        return commands.getstatusoutput('echo')
 
 
 def get_filename(fname, guid):
@@ -540,7 +545,6 @@ def create_directory(fname):
     ### logdir
     logdir = os.path.dirname(fname)
     cmd = """  mkdir -p %s """ % (logdir)
-#    print 'cmd=', cmd
     status, err = execute_cmd(cmd)
     if status != 0:
         msg = 'Failed to create directory %s. %s' % (logdir, str(err))
@@ -567,7 +571,8 @@ def get_copycmd(fname, guid):
 
     # Do we already have this logfile? Have a look for the tarball. If it is not there, then
     # we get it before we do anything else
-    if (not os.path.isfile("%s/%s" % (logdir, base))):
+#    if (not os.path.isfile("%s/%s" % (logdir, base))): #FIXME
+    if True:
         # We don't have this tarball, let's go get it from the grid
         if (fname.startswith('srm:')):
             # See: http://ppewww.ph.gla.ac.uk/~fergusjk/howtolcg.html
@@ -583,8 +588,8 @@ def get_copycmd(fname, guid):
             ### e.g.: https://lapp-se01.in2p3.fr:443/dpm/in2p3.fr/home/atlas/atlasscratchdisk/rucio/user/kkrizka/51/2a/user.kkrizka.016447._2112520451.log.tgz
             copycmd += " curl -s -L -O --cacert %(proxy)s --capath %(capath)s --cert %(proxy)s %(url)s " % \
                 {
-                    'proxy': utils.getX509Proxy(), \
-                    'capath': utils.getCapath(), \
+                    'proxy': get_x509_proxy(), \
+                    'capath': get_capath(), \
                     'url': fname, \
                 }
         # For non-SRM SURLS this will probably require debugging for CERN...
@@ -612,8 +617,6 @@ def get_copycmd(fname, guid):
                 ' export LCG_GFAL_INFOSYS=lcg-bdii.cern.ch:2170 ', \
                 logdir, copycmd)
     
-#    print 'cmd=', cmd
-
     return cmd
 
 
@@ -645,10 +648,8 @@ def list_file_directory(logdir):
     files = []
     err = ''
 
-#    print 'logdir=[%s]' % (logdir)
     cmd = " ls -l %s " % (logdir)
     status, output = execute_cmd(cmd)
-#    print '":635 status=%s, output=%s' % (status, output)
 
     # Process the tarball contents
     # First find the basename for the tarball files
