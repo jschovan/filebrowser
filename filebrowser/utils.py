@@ -2,6 +2,7 @@
     filebrowser.utils
     
 """
+import commands
 import logging
 import os
 from django.conf import settings
@@ -96,12 +97,9 @@ def get_my_settings():
     return my_settings
 
 
-def getRucioOAuthToken():
+def get_rucio_oauth_token():
     """
-        getRucioOAuthToken ... get Rucio OAuth Token
-        @params
-            rucioAccount  ...  $RUCIO_ACCOUNT
-            x509Proxy     ...  $X509_USER_PROXY
+        get_rucio_oauth_token ... get Rucio OAuth Token
         
         return: the Rucio OAuth token
     """
@@ -117,7 +115,7 @@ def getRucioOAuthToken():
            'rucio_api_host': get_rucio_rest_api_auth_host() \
          }
     cmd += ' | grep "X-Rucio-Auth-Token: " | sed -e "s#X-Rucio-Auth-Token: ##g" '
-    _logger.info('getRucioOAuthToken: cmd=(%s)' % cmd)
+    _logger.info('get_rucio_oauth_token: cmd=(%s)' % cmd)
 
     ### get the curl command output
     status, output = commands.getstatusoutput(cmd)
@@ -127,5 +125,34 @@ def getRucioOAuthToken():
 
     ### return the Rucio OAuth Token
     return rucioToken
+
+
+def get_rucio_metalink_file(rucioToken, lfn, scope):
+    """
+        get_rucio_metalink_file ... get Rucio metalink file with replicas of the lfn
+        @params
+            rucioToken ... Rucio OAuth Token
+            lfn ... file name, e.g. log.blahblah.tgz
+            scope ... Rucio scope, e.g. "user", or "data13_8tev"
+        
+        returns: content of Rucio metalink file as json string 
+    """
+    ### get the metalink file for scope:lfn
+    cmd = ' RUCIO_TOKEN="%(rucio_token)s" ;  curl -s --cacert %(proxy)s --capath %(capath)s  -H "X-Rucio-Auth-Token: $RUCIO_TOKEN"  -H "Accept: application/x-json-stream"  -X GET \'%(rucio_api_host)s/replicas/%(scope)s/%(lfn)s\' ' % \
+        { \
+            'rucio_api_host': get_rucio_rest_api_server_host(), \
+            'proxy': get_x509_proxy(), \
+            'capath': get_capath(), \
+            'rucio_token': rucioToken, \
+            'lfn': lfn, \
+            'scope': scope, \
+        }
+    _logger.info('get_rucio_oauth_token: cmd=(%s)' % cmd)
+
+    ### get the metalink file
+    status, output = commands.getstatusoutput(cmd)
+
+    ### return the Rucio metalink file
+    return output
 
 
