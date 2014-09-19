@@ -321,3 +321,42 @@ def get_rucio_redirect_response(redirectUrl):
     return surl
 
 
+def get_rucio_pfns_from_guids_with_rucio_redirect(guids, site, lfns, scopes):
+    """ 
+        get_rucio_pfns_from_guids_with_rucio_redirect
+        ... Get the Rucio replica dictionary from Rucio redirect
+    """
+
+    # FORMAT: { guid1: {'surls': [surl1, ..], 'lfn':LFN, 'fsize':FSIZE, 'checksum':CHECKSUM}, ..}
+    # where e.g. LFN='mc10_7TeV:ESD.321628._005210.pool.root.1', FSIZE=110359950 (long integer), CHECKSUM='ad:7bfc5de9'
+    # surl1='srm://srm.grid.sara.nl/pnfs/grid.sara.nl/data/atlas/atlasdatadisk/rucio/mc12_8TeV/cf/8f/EVNT.01365724._000001.pool.root.1'
+    # guid1='28FB7AE9-2234-F644-962A-17EA1D279AA7'
+
+    errtxt = ''
+    pfnlist = []
+
+    ### make sure RUCIO_ACCOUNT is in environment
+    get_rucio_account()
+    ### make sure X509_USER_PROXY is in environment
+    get_x509_proxy()
+
+    for lfn in lfns:
+        surl = ''
+        ### get scope
+        scope = 'ERROR_failed-to-determine-scope'
+        try:
+            scope = scopes[0]
+        except:
+            _logger.warning('get_rucio_pfns_from_guids_with_rucio_redirect: failed to determine scope. Using scope=' % (scope))
+        ### get Rucio redirect URL
+        redirectUrl = get_rucio_redirect_url(lfn, scope)
+        ### get pfnlist
+        if len(redirectUrl) > 0:
+            surl = get_rucio_redirect_response(redirectUrl)
+        ### add surl to pfnlist
+        if len(surl) > 0:
+            pfnlist.append(surl)
+
+    return pfnlist, errtxt
+
+
