@@ -6,9 +6,35 @@ import commands
 import json
 import logging
 import os
+import time
 from django.conf import settings
 
 _logger = logging.getLogger('bigpandamon-filebrowser')
+
+
+def get_filebrowser_vo():
+    """
+        get_filebrowser_vo
+        
+    """
+    return getattr(settings, "FILEBROWSER_VO", "atlas")
+
+
+def get_filebrowser_directory():
+    """
+        get_filebrowser_directory
+        
+    """
+    return getattr(settings, "FILEBROWSER_DIRECTORY", "filebrowser")
+
+
+def get_fullpath_filebrowser_directory():
+    """
+        get_fullpath_filebrowser_directory
+        
+    """
+    return getattr(settings, "MEDIA_ROOT", "/tmp") + '/' \
+        + getattr(settings, "FILEBROWSER_DIRECTORY", "filebrowser")
 
 
 def get_rucio_account():
@@ -485,5 +511,237 @@ def get_rucio_pfns_from_guids(guids, site, lfns, scopes):
 
     ### default return
     return pfnlist, errtxt
+
+
+def execute_cmd(cmd):
+    """
+        execute_cmd
+    """
+    return commands.getstatusoutput(cmd)
+
+
+def get_filename(fname, guid):
+    """
+        get_filename
+        
+    """
+    ### logdir
+    logdir = get_fullpath_filebrowser_directory() + '/' + guid.lower()
+    ### basename for the file
+    base = os.path.basename(fname)
+    return '%s/%s' % (logdir, base)
+
+
+def create_directory(fname):
+    """
+        create_directory
+    """
+    errtxt = ''
+    ### logdir
+    logdir = os.path.dirname(fname)
+    cmd = """  mkdir -p %s """ % (logdir)
+#    print 'cmd=', cmd
+    status, err = execute_cmd(cmd)
+    if status != 0:
+        msg = 'Failed to create directory %s. %s' % (logdir, str(err))
+        _logger.error(msg)
+        errtxt = msg
+    return logdir, errtxt
+
+
+def get_copycmd(fname, guid):
+    """
+        get_copycmd
+        
+        returns command string to be executed
+    """
+    ### command to execute to fetch the file
+    cmd = ''
+    copycmd = ''
+    ### logdir
+#    logdir = get_fullpath_filebrowser_directory() + '/' + guid.lower()
+    logdir = os.path.dirname(fname)
+    ### Virtual Organisation
+    vo = get_filebrowser_vo()
+    ### basename for the file
+    base = os.path.basename(fname)
+
+    # Do we already have this logfile? Have a look for the tarball. If it is not there, then
+    # we get it before we do anything else
+    if (not os.path.isfile("%s/%s" % (logdir, base))):
+        # We don't have this tarball, let's go get it from the grid
+        if (fname.startswith('srm:')):
+            # See: http://ppewww.ph.gla.ac.uk/~fergusjk/howtolcg.html
+            # This should cover 99% of all cases now
+            # Some US sites are not in the BDII, so we need to construct the full SURL with endpoint
+            # If the LFC entry has SFN in it then it must have the full SURL:
+            if fname.find('SFN=') >= 0:
+                copycmd += """lcg-cp  -b -T srmv2 -V %(vo)s '%(file)s' "file:///$PWD/%(base)s" """ % {'vo' : vo, 'file' : fname, 'base' : base }
+            else:
+                copycmd += """lcg-cp  -T srmv2 -V %(vo)s '%(file)s' "file:///$PWD/%(base)s" """ % {'vo' : vo, 'file' : fname, 'base' : base }
+
+        elif  (fname.startswith('https:') and re.search('/rucio/', fname)):
+            ### e.g.: https://lapp-se01.in2p3.fr:443/dpm/in2p3.fr/home/atlas/atlasscratchdisk/rucio/user/kkrizka/51/2a/user.kkrizka.016447._2112520451.log.tgz
+            copycmd += " curl -s -L -O --cacert %(proxy)s --capath %(capath)s --cert %(proxy)s %(url)s " % \
+                {
+                    'proxy': utils.getX509Proxy(), \
+                    'capath': utils.getCapath(), \
+                    'url': fname, \
+                }
+        # For non-SRM SURLS this will probably require debugging for CERN...
+        elif fname.startswith('/pnfs/usatlas.bnl.gov'):
+            ## replacing dccp with srmcp ##
+            copycmd += 'srmcp -globus_tcp_port_range=20000,50000 "srm://dcsrm.%s:8443%s" file:///$PWD/%s' \
+                % (fname.split('/', 3)[2], fname, base)
+        elif fname.startswith('/pnfs/uchicago.edu'):
+            copycmd += 'globus-url-copy "gsiftp://uct2-dc1.uchicago.edu%s" "file://$PWD/%s"' % (fname, base)
+        elif fname.startswith('/pnfs/iu.edu'):
+            copycmd += 'globus-url-copy "gsiftp://iut2-dc1.iu.edu%s" "file://$PWD/%s"' % (fname, base)
+        elif fname.startswith('/pnfs/aglt2.org/atlasproddisk') or fname.startswith('/pnfs/aglt2.org/atlasuserdisk'):
+            copycmd += 'globus-url-copy "gsiftp://umfs07.aglt2.org:2811%s" "file://$PWD/%s"' % (fname, base)
+        elif fname.startswith('dcap:'):
+            ## replacing dccp with srmcp ##
+            copycmd += 'srmcp -globus_tcp_port_range=20000,50000 "srm://dcsrm.%s:8443%s" file:///$PWD/%s' \
+                % (fname.split('/', 3)[2], fname, base)
+        else:
+            # Copy command of last resort...
+            copycmd += 'globus-url-copy "%s" file://$PWD/%s' % (fname, base)
+
+        # Now exectute the tarball fetcher...
+        cmd = '%s ; %s ; cd %s; %s' % (\
+                ' export X509_USER_PROXY=' + get_x509_proxy() + ' ', \
+                ' export LCG_GFAL_INFOSYS=lcg-bdii.cern.ch:2170 ', \
+                logdir, copycmd)
+    
+#    print 'cmd=', cmd
+
+    return cmd
+
+
+def unpack_file(fname):
+    """
+        unpack_file
+    """
+    errtxt = ''
+    ### logdir
+    logdir = os.path.dirname(fname)
+    ### basename for the file
+    base = os.path.basename(fname)
+
+    cmd = "cd %s; tar -xvzf %s" % (logdir, base)
+    (status, output) = commands.getstatusoutput(cmd)
+    if status != 0:
+        msg = 'Cannot unpack file [%s].' % (fname)
+        _logger.error(msg)
+        _logger.error(str(output))
+        errtxt = msg
+    return status, errtxt
+
+
+def list_file_directory(logdir):
+    """
+        list_file_directory
+        
+    """
+    files = []
+    err = ''
+
+#    print 'logdir=[%s]' % (logdir)
+    cmd = " ls -l %s " % (logdir)
+    status, output = execute_cmd(cmd)
+#    print '":635 status=%s, output=%s' % (status, output)
+
+    # Process the tarball contents
+    # First find the basename for the tarball files
+    tardir = ''
+    for entry in os.listdir(logdir):
+        if entry.startswith('tarball'):
+            tardir = entry
+            continue
+    if not len(tardir):
+        err = "Problem with tarball, could not find expected directory (got %s)." % os.listdir(logdir)
+        return files, err, tardir
+
+    # Now list the contents of the tarball directory:
+    try:
+        contents = os.listdir(os.path.join(logdir, tardir))
+        _logger.debug(contents)
+        contents.sort()
+        fileStats = {}
+        linkStats = {}
+        linkName = {}
+        for f in contents:
+            myFile = os.path.join(logdir, tardir, f)
+            try:
+                fileStats[f] = os.lstat(myFile)
+            except OSError, (errno, errMsg):
+                err += 'Warning: Error in lstat on %s (%s).\n' % (myFile, errMsg)
+                fileStats[f] = None
+            if os.path.islink(myFile):
+                try:
+                    linkName[f] = os.readlink(myFile)
+                    linkStats[f] = os.stat(myFile)
+                except OSError, (errno, errMsg):
+                    err += 'Warning: Error in stat on linked file %s linked from %s (%s).\n' % (linkName[f], f, errMsg)
+                    linkStats[f] = None
+        for f in contents:
+            f_content = {}
+            if f in fileStats:
+                if fileStats[f] != None:
+                    f_content['modification'] = time.asctime(time.gmtime(fileStats[f][8]))
+                    f_content['size'] = fileStats[f][6]
+                    f_content['name'] = f
+            files.append(f_content)
+    except OSError, (errno, errMsg):
+        msg = "Error in filesystem call:" + str(errMsg)
+        _logger.error(msg)
+
+    return files, output, tardir
+
+
+def fetch_file(pfn, guid):
+    """
+        fetch_file
+            ... Download the file with pfn.
+        
+        returns: local path to the file
+    """
+    errtxt = ''
+    files = []
+
+    ### get the filename
+    fname = get_filename(pfn, guid)
+
+    ### create directory for files of guid
+    dir, err = create_directory(fname)
+    if not len(err):
+        errtxt += err
+
+    ### get command to copy file
+    cmd = get_copycmd(pfn, guid)
+    if not len(cmd):
+        _logger.warning('Command to fetch the file is empty!')
+        return files, errtxt
+
+    ### download the file
+    status, err = execute_cmd(cmd)
+    if status != 0:
+        _logger.error('File download failed with command [%s].' % (cmd))
+
+    ### untar the file
+    status, err = unpack_file(fname)
+    if status != 0:
+        _logger.error('File unpacking failed for file [%s].' % (fname))
+
+    ### list the files
+    files, err, tardir = list_file_directory(dir)
+    if len(err):
+        _logger.error('File listing failed for file [%s]: [%s].' % (fname, err))
+
+    ### urlbase
+    urlbase = get_filebrowser_directory() + '/' + guid.lower() + '/' + tardir
+
+    ### return list of files
+    return files, errtxt, urlbase
 
 

@@ -27,10 +27,31 @@ TEMPLATE_DIRS = (
 )
 ```
 
-3. Include the filebrowser URLconf in your project urls.py like this::
+3. Add "filebrowser" directory name to settings::
+```
+FILEBROWSER_DIRECTORY = "filebrowser"
+```
+This directory will be under MEDIA_ROOT.
+
+4. Configure proxy settings::
+```
+X509_USER_PROXY = "/data/atlpan/x509up_u25606"
+CAPATH = "/etc/grid-security/certificates"
+```
+
+5. Configure Rucio client settings:
+```
+RUCIO_ACCOUNT = "atlpan"
+RUCIO_REDIRECT_HOST = "https://voatlasrucio-redirect-prod-01.cern.ch"
+RUCIO_AUTH_HOST = "https://voatlasrucio-auth-prod.cern.ch"
+RUCIO_SERVER_HOST = "https://voatlasrucio-server-prod.cern.ch"
+```
+
+6. Include the filebrowser URLconf in your project urls.py like this::
 ```
 url(r'^filebrowser/', include('filebrowser.urls')),
 ```
 
-4. Visit http://127.0.0.1:8000/filebrowser/ to browse the files.
+7. Visit http://127.0.0.1:8000/filebrowser/ to browse the files.
+
 

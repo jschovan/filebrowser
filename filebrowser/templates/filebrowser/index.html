@@ -6,7 +6,8 @@
 {% block extra_js %}{% endblock %}
 {% block gacode %}UA-44940804-1{% endblock %}
 {% block gaweb %}pandawms.org{% endblock %}
-{% block subtitle %}FileBrowser{% endblock %}
+{% block subtitle %}FileBrowser{% if scope %} for file: {{scope}}{% if lfn %}:{{lfn}}{% endif %}{% endif %}
+{% endblock %}
 {% block header-nav-chain-1 %}<a href="{% url 'index' %}">FileBrowser</a>{% endblock %}{% block header-nav-chain-1-separator %}{{ SEPARATOR_NAVIGATION_ITEM|safe }}{% endblock %}
 {% block header-nav-chain-2 %}{% endblock %}{% block header-nav-chain-2-separator %}{% endblock %}
 {% block header-nav-chain-3 %}{% endblock %}{% block header-nav-chain-3-separator %}{% endblock %}
@@ -16,6 +17,34 @@
 {% block left_menu %}{% endblock %}
 {% block body_mobile %}{% endblock %}
 {% block body %}
-hi there!
+<div>File lookup parameters</div>
+<div class="columns"><ul>
+{% if scope %}<li>Scope: {{scope}}</li>{% endif %}
+{% if lfn %}<li>LFN: {{lfn}}</li>{% endif %}
+{% if site %}<li>Site: {{site}}</li>{% endif %}
+{% if guid %}<li>GUID: {{guid}}</li>{% endif %}
+</ul> 
+</div>
+
+<table>
+{% if files %}
+<thead>
+<th>Modification time</th>
+<th>Size</th>
+<th>File</th>
+</thead>
+<tbody>
+{% for f in files %}
+<tr>
+<td>{{f.modification}}</td>
+<td>{{f.size}}</td>
+<td><a href="{{MEDIA_URL}}{{dirprefix}}/{{f.name}}" >{{f.name}}</a></td>
+</tr>
+{% endfor %}
+</tbody>
+{% else %}
+{{errors}}
+{% endif %}
+</table>
 
 {% endblock %}
