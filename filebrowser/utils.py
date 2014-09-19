@@ -433,3 +433,57 @@ def get_rucio_pfns_from_guids_with_dq2client(guids, site, lfns, scopes):
     return pfnlist, errtxt
 
 
+def get_rucio_pfns_from_guids(guids, site, lfns, scopes):
+    """ 
+        Get the Rucio replica dictionary 
+            from Rucio metalink file
+            or
+            from Rucio redirector
+            or
+            from DQ2/Rucio client 
+    """
+    pfnlist = []
+    errtxt = ''
+
+    ### get pfnlist from Rucio metalink file
+    try:
+        pfnlist, errtxt = get_rucio_pfns_from_guids_with_rucio_metalink_file(guids, site, lfns, scopes)
+    except:
+        _logger.error('Failed to get PFNS from metalink file: guids=%s, site=%s, lfns=%s, scopes=%s' \
+                      % (guids, site, lfns, scopes))
+    ### pfnlist from Rucio metalink file not empty, return it
+    if len(pfnlist) > 0:
+        return pfnlist, errtxt
+
+    ### get pfnlist from Rucio redirector
+    try:
+        pfnlist, errtxt = get_rucio_pfns_from_guids_with_rucio_redirect(guids, site, lfns, scopes)
+    except:
+        _logger.error('Failed to get PFNS from redirect: guids=%s, site=%s, lfns=%s, scopes=%s' \
+                      % (guids, site, lfns, scopes))
+    ### pfnlist from Rucio redirector not empty, return it
+    if len(pfnlist) > 0:
+        return pfnlist, errtxt
+
+    ### get pfnlist from DQ2/Rucio client
+    try:
+        pfnlist, errtxt = get_rucio_pfns_from_guids_with_dq2client(guids, site, lfns, scopes)
+    except:
+        _logger.error('Failed to get PFNS from DQ2 client: guids=%s, site=%s, lfns=%s, scopes=%s' \
+                      % (guids, site, lfns, scopes))
+    ### pfnlist from DQ2/Rucio client not empty, return it
+    if len(pfnlist) > 0:
+        return pfnlist, errtxt
+
+    errtxt += 'You are out of luck today, file not found. ' \
+            + 'Used search parameters: ' \
+            + 'site=' + str(site) + ' ' \
+            + 'guids=' + str(guids) + ' ' \
+            + 'lfns=' + str(lfns) + ' ' \
+            + 'scopes=' + str(scopes) + ' ' \
+            + errtxt
+
+    ### default return
+    return pfnlist, errtxt
+
+
