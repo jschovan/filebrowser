@@ -722,22 +722,25 @@ def fetch_file(pfn, guid):
     cmd = get_copycmd(pfn, guid)
     if not len(cmd):
         _logger.warning('Command to fetch the file is empty!')
-        return files, errtxt
 
     ### download the file
     status, err = execute_cmd(cmd)
     if status != 0:
-        _logger.error('File download failed with command [%s]. Output: [%s].' % (cmd, err))
+        msg = 'File download failed with command [%s]. Output: [%s].' % (cmd, err)
+        _logger.error(msg)
+        errtxt += msg
 
     ### untar the file
     status, err = unpack_file(fname)
     if status != 0:
-        _logger.error('File unpacking failed for file [%s].' % (fname))
+        msg = 'File unpacking failed for file [%s].' % (fname)
+        _logger.error(msg)
 
     ### list the files
     files, err, tardir = list_file_directory(dir)
     if len(err):
-        _logger.error('File listing failed for file [%s]: [%s].' % (fname, err))
+        msg = 'File listing failed for file [%s]: [%s].' % (fname, err)
+        _logger.error(msg)
 
     ### urlbase
     urlbase = get_filebrowser_directory() + '/' + guid.lower() + '/' + tardir
