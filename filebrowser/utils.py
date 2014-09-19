@@ -3,6 +3,7 @@
     
 """
 import commands
+import json
 import logging
 import os
 from django.conf import settings
@@ -154,5 +155,45 @@ def get_rucio_metalink_file(rucioToken, lfn, scope):
 
     ### return the Rucio metalink file
     return output
+
+
+def get_surls_from_rucio_metalink_file(metalink):
+    """
+        get_surls_from_rucio_metalink_file ... get SURLs from Rucio metalink file
+        @params
+            metalink
+        
+        returns: list of SURLs
+    """
+    surls = []
+
+    ### read data from metalink file
+    data = {}
+    try:
+        data = json.loads('%s' % (metalink))
+    except:
+        _logger.error('get_surls_from_rucio_metalink_file: cannot load data from metalink file. Exiting.')
+        return surls
+
+    ### get rses node with surls
+    rses = {}
+    try:
+        rses = data['rses']
+    except:
+        _logger.error('get_surls_from_rucio_metalink_file: cannot get rses node from metalink data. Exiting.')
+        return surls
+
+    ### collect list of surls from rses nodes
+    for rse in rses:
+        rseSurls = []
+        try:
+            rseSurls = rses[rse]
+        except:
+            _logger.warning('get_surls_from_rucio_metalink_file: cannot get SURLs for rse %s. Continue.' % rse)
+        surls.extend(rseSurls)
+
+    ### return list of surls
+    return surls
+
 
 
