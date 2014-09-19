@@ -559,8 +559,7 @@ def get_copycmd(fname, guid):
     cmd = ''
     copycmd = ''
     ### logdir
-#    logdir = get_fullpath_filebrowser_directory() + '/' + guid.lower()
-    logdir = os.path.dirname(fname)
+    logdir = get_fullpath_filebrowser_directory() + '/' + guid.lower()
     ### Virtual Organisation
     vo = get_filebrowser_vo()
     ### basename for the file
@@ -670,8 +669,10 @@ def list_file_directory(logdir):
         fileStats = {}
         linkStats = {}
         linkName = {}
+        isFile = {}
         for f in contents:
             myFile = os.path.join(logdir, tardir, f)
+            isFile[f] = os.path.isfile(myFile)
             try:
                 fileStats[f] = os.lstat(myFile)
             except OSError, (errno, errMsg):
@@ -687,7 +688,7 @@ def list_file_directory(logdir):
         for f in contents:
             f_content = {}
             if f in fileStats:
-                if fileStats[f] != None:
+                if fileStats[f] is not None and f in isFile and isFile[f]:
                     f_content['modification'] = time.asctime(time.gmtime(fileStats[f][8]))
                     f_content['size'] = fileStats[f][6]
                     f_content['name'] = f
@@ -726,7 +727,7 @@ def fetch_file(pfn, guid):
     ### download the file
     status, err = execute_cmd(cmd)
     if status != 0:
-        _logger.error('File download failed with command [%s].' % (cmd))
+        _logger.error('File download failed with command [%s]. Output: [%s].' % (cmd, err))
 
     ### untar the file
     status, err = unpack_file(fname)
