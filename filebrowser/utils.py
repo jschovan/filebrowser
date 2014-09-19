@@ -96,3 +96,36 @@ def get_my_settings():
     return my_settings
 
 
+def getRucioOAuthToken():
+    """
+        getRucioOAuthToken ... get Rucio OAuth Token
+        @params
+            rucioAccount  ...  $RUCIO_ACCOUNT
+            x509Proxy     ...  $X509_USER_PROXY
+        
+        return: the Rucio OAuth token
+    """
+    ### init the Rucio OAuth Token
+    rucioToken = ''
+
+    ### assemble the curl command
+    cmd = ' curl -s -i -H "X-Rucio-Account: %(rucio_account)s" --cacert %(proxy)s --cert %(proxy)s --capath %(capath)s -X GET %(rucio_api_host)s/auth/x509_proxy ' \
+        % {
+           'rucio_account': get_rucio_account(), \
+           'proxy': get_x509_proxy(), \
+           'capath': get_capath(), \
+           'rucio_api_host': get_rucio_rest_api_auth_host() \
+         }
+    cmd += ' | grep "X-Rucio-Auth-Token: " | sed -e "s#X-Rucio-Auth-Token: ##g" '
+    _logger.info('getRucioOAuthToken: cmd=(%s)' % cmd)
+
+    ### get the curl command output
+    status, output = commands.getstatusoutput(cmd)
+
+    ### get the rucioToken
+    rucioToken = output.rstrip()
+
+    ### return the Rucio OAuth Token
+    return rucioToken
+
+
