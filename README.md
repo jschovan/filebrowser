@@ -54,4 +54,7 @@ url(r'^filebrowser/', include('filebrowser.urls')),
 
 7. Visit http://127.0.0.1:8000/filebrowser/ to browse the files.
 
-
+8. Run unit tests from your Django site area::
+```
+python manage.py test filebrowser.tests
+```
