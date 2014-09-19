@@ -276,3 +276,48 @@ def get_rucio_redirect_url(lfn, scope):
     return redirectUrl
 
 
+def get_location_from_rucio_redirect_output(output):
+    """
+        getLocationFromRucioRedirectOutput 
+            output ... output of e.g. curl -i --silent --capath /etc/grid-security/certificates --cacert /data/atlpan/x509up_u25606 --cert /data/atlpan/x509up_u25606 https://voatlasrucio-redirect-prod-01.cern.ch/redirect/user.kkrizka/user.kkrizka.016447._2112520451.log.tgz
+            
+    """
+    surl = ''
+    ### get lines of the output
+    lines = output.split('\n')
+    stopProcessing = False
+    for line in lines:
+        if line.startswith('Location:') and not stopProcessing:
+            stopProcessing = True
+            words = line.split()
+            try:
+                surl = words[1]
+            except:
+                _logger.error('get_location_from_rucio_redirect_output: Cannot get surl from curl output.')
+    return surl
+
+
+def get_rucio_redirect_response(redirectUrl):
+    """
+        get_rucio_redirect_response: get response of Rucio redirect 
+        @params: redirectUrl ... one URL
+            e.g. https://voatlasrucio-redirect-prod-01.cern.ch/redirect/user.gangarbt/user.gangarbt.62544955._2108356106.log.tgz
+        
+    """
+    if len(redirectUrl) < 1:
+        return ''
+    surl = ''
+    ### command
+    cmd = " curl -i --silent --capath %(capath)s --cacert %(x509proxy)s --cert %(x509proxy)s %(url)s " % \
+        {\
+            'capath': get_capath(), \
+            'x509proxy': get_x509_proxy(), \
+            'url': redirectUrl \
+         }
+    _logger.info('get_rucio_redirect_response: cmd=(%s)' % cmd)
+    status, output = commands.getstatusoutput(cmd)
+    get_lo
+    surl = get_location_from_rucio_redirect_output(output)
+    return surl
+
+
