@@ -148,7 +148,6 @@ def get_rucio_metalink_file(rucioToken, lfn, scope):
             'lfn': lfn, \
             'scope': scope, \
         }
-    _logger.info('get_rucio_oauth_token: cmd=(%s)' % cmd)
 
     ### get the metalink file
     status, output = commands.getstatusoutput(cmd)
@@ -251,5 +250,29 @@ def get_rucio_pfns_from_guids_with_rucio_metalink_file(guids, site, lfns, scopes
         _logger.warning('get_rucio_pfns_from_guids_with_rucio_metalink_file: failed to make pfnlist unique')
 
     return pfnlist, errtxt
+
+
+def get_rucio_redirect_url(lfn, scope):
+    """
+        get_rucio_redirect_url: assemble Rucio redirect URL 
+        @params: lfn ... one filename
+                        e.g. user.gangarbt.62544955._2108356106.log.tgz
+                  scope ... scope of the file with lfn
+                        e.g. user.gangarbt, or valid1
+        
+        returns: the Rucio redirect URL
+    """
+    redirectUrl = ''
+    ### compose the redirecURL
+    redirectUrl = '%(redirecthost)s/redirect/%(scope)s/%(filename)s%(suffix)s' % \
+            {\
+                'redirecthost': get_rucio_redirect_host(), \
+                'scope': scope, \
+                'filename': lfn, \
+                'suffix': '' \
+            }
+    _logger.info('get_rucio_redirect_url: redirectUrl=(%s)' % redirectUrl)
+    ### return the redirectURL
+    return redirectUrl
 
 
