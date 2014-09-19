@@ -3,7 +3,7 @@
 # Setup prog for bigpandamon-core
 #
 #
-from version import __version__, __provides__
+from .version import __version__, __provides__
 prefix = '/data/atlpan/bigpandamon'
 lib_prefix = 'lib/python2.6/site-packages/'
 expected_extensions = ['.html', '.js', '.css', '.png', '.gif', '.ico', '-example'] #FIXME
@@ -84,7 +84,7 @@ class install_data_panda (install_data_org):
         if optPanda.has_key('usergroup') and optPanda['usergroup'] != '':
             self.usergroup = optPanda['usergroup']
         else:
-            self.usergroup = commands.getoutput('id -gn')             
+            self.usergroup = commands.getoutput('id -gn')
         
     
     def is_expected_extension(self, filename):
