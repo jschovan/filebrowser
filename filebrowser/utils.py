@@ -196,4 +196,60 @@ def get_surls_from_rucio_metalink_file(metalink):
     return surls
 
 
+def get_rucio_pfns_from_guids_with_rucio_metalink_file(guids, site, lfns, scopes):
+    """ 
+        get_rucio_pfns_from_guids_with_rucio_metalink_file 
+            ... Get the Rucio replica dictionary from Rucio metalink file
+        @params
+            guids ... list of GUIDs
+            site ... PanDA resource (siteID)
+            lfns ... list of LFNs
+            scopes ... list of scopes for the LFNs
+        
+        returns: list of PFNs
+    """
+
+    # FORMAT: { guid1: {'surls': [surl1, ..], 'lfn':LFN, 'fsize':FSIZE, 'checksum':CHECKSUM}, ..}
+    # where e.g. LFN='mc10_7TeV:ESD.321628._005210.pool.root.1', FSIZE=110359950 (long integer), CHECKSUM='ad:7bfc5de9'
+    # surl1='srm://srm.grid.sara.nl/pnfs/grid.sara.nl/data/atlas/atlasdatadisk/rucio/mc12_8TeV/cf/8f/EVNT.01365724._000001.pool.root.1'
+    # guid1='28FB7AE9-2234-F644-962A-17EA1D279AA7'
+
+    errtxt = ''
+    pfnlist = []
+
+    ### make sure RUCIO_ACCOUNT is in environment
+    rucioAccount = get_rucio_account()
+
+    ### make sure X509_USER_PROXY is in environment
+    X509Proxy = get_x509_proxy()
+
+    ### get Rucio OAuth token
+    rucioOAuthToken = get_rucio_oauth_token()
+
+    for lfn in lfns:
+        ### get scope
+        scope = 'ERROR_failed-to-determine-scope'
+        try:
+            scope = scopes[0]
+        except:
+            _logger.warning('get_rucio_pfns_from_guids_with_rucio_metalink_file: failed to determine scope. Using scope=' % (scope))
+
+        ### get the metalink file for each lfn
+        metalink = get_rucio_metalink_file(rucioOAuthToken, lfn, scope)
+
+        ### get list of surls from the metalink file
+        surls = get_surls_from_rucio_metalink_file(metalink)
+
+        ### add surls to pfnlist
+        if len(surls):
+            pfnlist.extend(surls)
+
+    ### make pfnlist unique
+    try:
+        pfnlist = list(set(pfnlist))
+    except:
+        _logger.warning('get_rucio_pfns_from_guids_with_rucio_metalink_file: failed to make pfnlist unique')
+
+    return pfnlist, errtxt
+
 
