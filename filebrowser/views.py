@@ -104,7 +104,7 @@ def index(request):
         'lfn': lfn, \
         'site': site, \
         'guid': guid, \
-        'viewParams' : {'MON_VO': get_filebrowser_vo()}, \
+        'viewParams' : {'MON_VO': str(get_filebrowser_vo()).upper()}, \
     }
     return render_to_response('filebrowser/index.html', data, RequestContext(request))
 
