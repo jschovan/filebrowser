@@ -42,7 +42,7 @@ CAPATH = "/etc/grid-security/certificates"
 5. Configure Rucio client settings:
   ```
 RUCIO_ACCOUNT = "atlpan"
-RUCIO_REDIRECT_HOST = "https://voatlasrucio-redirect-prod-01.cern.ch"
+RUCIO_REDIRECT_HOST = "https://rucio-lb-prod.cern.ch"
 RUCIO_AUTH_HOST = "https://voatlasrucio-auth-prod.cern.ch"
 RUCIO_SERVER_HOST = "https://voatlasrucio-server-prod.cern.ch"
   ```

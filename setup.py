@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Setup prog for bigpandamon-core
+# Setup prog for bigpandamon-atlas-filebrowser
 #
 #
 from version import __version__, __provides__
@@ -84,7 +84,7 @@ class install_data_panda (install_data_org):
         if optPanda.has_key('usergroup') and optPanda['usergroup'] != '':
             self.usergroup = optPanda['usergroup']
         else:
-            self.usergroup = commands.getoutput('id -gn')             
+            self.usergroup = commands.getoutput('id -gn')
         
     
     def is_expected_extension(self, filename):

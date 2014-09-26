@@ -122,7 +122,7 @@ class SimpleFileBrowserTest(unittest.TestCase):
         host_redirect = get_rucio_redirect_host()
         self.assertEqual(host_redirect, \
                     getattr(settings, "RUCIO_REDIRECT_HOST", \
-                            "https://voatlasrucio-redirect-prod-01.cern.ch"))
+                            "https://rucio-lb-prod.cern.ch"))
         ### auth host
         host_auth = get_rucio_rest_api_auth_host()
         self.assertEqual(host_auth, \

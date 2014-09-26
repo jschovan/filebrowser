@@ -73,7 +73,7 @@ def get_rucio_redirect_host():
     """
     return getattr(settings, \
                 "RUCIO_REDIRECT_HOST", \
-                "https://voatlasrucio-redirect-prod-01.cern.ch")
+                "https://rucio-lb-prod.cern.ch")
 
 
 def get_rucio_rest_api_auth_host():
