@@ -21,6 +21,14 @@ def get_filebrowser_vo():
     return getattr(settings, "FILEBROWSER_VO", "atlas")
 
 
+def get_filebrowser_hostname():
+    """
+        get_filebrowser_hostname
+        
+    """
+    return getattr(settings, "FILEBROWSER_HOSTNAME", commands.getoutput('hostname'))
+
+
 def get_filebrowser_directory():
     """
         get_filebrowser_directory
@@ -744,9 +752,9 @@ def fetch_file(pfn, guid):
         _logger.error(msg)
 
     ### urlbase
-    urlbase = get_filebrowser_directory() + '/' + guid.lower() + '/' + tardir
+    urlbase = get_filebrowser_directory() + '/' + guid.lower()  # + '/' + tardir
 
     ### return list of files
-    return files, errtxt, urlbase
+    return files, errtxt, urlbase, tardir
 
 

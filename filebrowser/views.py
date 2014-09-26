@@ -8,7 +8,8 @@ from django.shortcuts import render_to_response, render
 from django.template import RequestContext, loader
 #from django.core.urlresolvers import reverse
 #from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
-from .utils import get_rucio_pfns_from_guids, fetch_file, get_filebrowser_vo
+from .utils import get_rucio_pfns_from_guids, fetch_file, get_filebrowser_vo, \
+get_filebrowser_hostname
 
 
 _logger = logging.getLogger('bigpandamon-filebrowser')
@@ -80,9 +81,10 @@ def index(request):
     ### download the file
     files = []
     dirprefix = ''
+    tardir = ''
     if len(pfns):
         pfn = pfns[0]
-        files, errtxt, dirprefix = fetch_file(pfn, guid)
+        files, errtxt, dirprefix, tardir = fetch_file(pfn, guid)
         if not len(pfns):
             msg = 'File download failed. [pfn=%s guid=%s, site=%s, scope=%s, lfn=%s]' % \
                 (pfn, guid, site, scope, lfn)
@@ -100,11 +102,13 @@ def index(request):
         'pfns': pfns, \
         'files': files, \
         'dirprefix': dirprefix, \
+        'tardir': tardir, \
         'scope': scope, \
         'lfn': lfn, \
         'site': site, \
         'guid': guid, \
         'viewParams' : {'MON_VO': str(get_filebrowser_vo()).upper()}, \
+        'HOSTNAME': get_filebrowser_hostname() \
     }
     return render_to_response('filebrowser/index.html', data, RequestContext(request))
 
