@@ -672,15 +672,19 @@ def list_file_directory(logdir):
 
     # Now list the contents of the tarball directory:
     try:
-        contents = os.listdir(os.path.join(logdir, tardir))
+        contents = []
+        for walk_root, walk_dirs, walk_files in \
+            os.walk(os.path.join(logdir, tardir), followlinks=False):
+            for name in walk_files:
+                contents.append(os.path.join(walk_root, name))
         _logger.debug(contents)
-        contents.sort()
+#        contents.sort()
         fileStats = {}
         linkStats = {}
         linkName = {}
         isFile = {}
         for f in contents:
-            myFile = os.path.join(logdir, tardir, f)
+            myFile = f
             isFile[f] = os.path.isfile(myFile)
             try:
                 fileStats[f] = os.lstat(myFile)
@@ -700,7 +704,8 @@ def list_file_directory(logdir):
                 if fileStats[f] is not None and f in isFile and isFile[f]:
                     f_content['modification'] = time.asctime(time.gmtime(fileStats[f][8]))
                     f_content['size'] = fileStats[f][6]
-                    f_content['name'] = f
+                    f_content['name'] = os.path.basename(f)
+                    f_content['dirname'] = re.sub(os.path.join(logdir, tardir), '', os.path.dirname(f))
             files.append(f_content)
     except OSError, (errno, errMsg):
         msg = "Error in filesystem call:" + str(errMsg)
@@ -752,7 +757,7 @@ def fetch_file(pfn, guid):
         _logger.error(msg)
 
     ### urlbase
-    urlbase = get_filebrowser_directory() + '/' + guid.lower()  # + '/' + tardir
+    urlbase = get_filebrowser_directory() + '/' + guid.lower()
 
     ### return list of files
     return files, errtxt, urlbase, tardir

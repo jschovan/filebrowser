@@ -33,7 +33,6 @@ def index(request):
         except:
             msg = 'Missing expected GET parameter %s. ' % expectedField
             _logger.error(msg)
-#            print 'error:', msg
             if 'missingparameter' not in errors.keys():
                 errors['missingparameter'] = ''
             errors['missingparameter'] += msg
@@ -46,33 +45,24 @@ def index(request):
     site = ''
     try:
         guid = request.GET['guid']
-#        _logger.info('guid=' + guid)
     except:
         pass
     try:
         site = request.GET['site']
-#        _logger.info('site=' + site)
     except:
         pass
     try:
         lfn = request.GET['lfn']
-#        _logger.info('lfn=' + lfn)
     except:
         pass
     try:
         scope = request.GET['scope']
-#        _logger.info('scope='+scope)
     except:
         pass
 
     if 'missingparameter' not in errors.keys():
         pfns, errtxt = get_rucio_pfns_from_guids(guids=[guid], site=[site], \
                     lfns=[lfn], scopes=[scope])
-#        if not len(pfns):
-#            msg = 'File lookup failed. [guid=%s, site=%s, scope=%s, lfn=%s]' % \
-#                (guid, site, scope, lfn)
-#            _logger.warning(msg)
-#            errors['lookup'] = msg
         if len(errtxt):
             if 'lookup' not in errors:
                 errors['lookup'] = ''
@@ -96,6 +86,7 @@ def index(request):
 
     ### return the file page
 
+
     ### set request response data
     data = { \
         'errors': errors, \
@@ -109,6 +100,7 @@ def index(request):
         'guid': guid, \
         'viewParams' : {'MON_VO': str(get_filebrowser_vo()).upper()}, \
         'HOSTNAME': get_filebrowser_hostname() \
+#        , 'new_contents': new_contents
     }
     return render_to_response('filebrowser/index.html', data, RequestContext(request))
 
