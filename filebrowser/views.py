@@ -102,6 +102,6 @@ def index(request):
         'HOSTNAME': get_filebrowser_hostname() \
 #        , 'new_contents': new_contents
     }
-    return render_to_response('filebrowser/index.html', data, RequestContext(request))
+    return render_to_response('filebrowser/filebrowser_index.html', data, RequestContext(request))
 
 
