@@ -26,7 +26,7 @@ def get_filebrowser_hostname():
         get_filebrowser_hostname
         
     """
-    return getattr(settings, "FILEBROWSER_HOSTNAME", commands.getoutput('hostname'))
+    return getattr(settings, "FILEBROWSER_HOSTNAME", commands.getoutput('hostname -f'))
 
 
 def get_filebrowser_directory():
