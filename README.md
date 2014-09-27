@@ -26,6 +26,7 @@ TEMPLATE_DIRS = (
     ...
 )
   ```
+  List filebrowser templates only after your Django site's templates, to allow for template extension.  
 
 3. Add "filebrowser" directory name to settings:
   ```
