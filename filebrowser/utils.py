@@ -678,7 +678,6 @@ def list_file_directory(logdir):
             for name in walk_files:
                 contents.append(os.path.join(walk_root, name))
         _logger.debug(contents)
-#        contents.sort()
         fileStats = {}
         linkStats = {}
         linkName = {}
@@ -710,6 +709,9 @@ def list_file_directory(logdir):
     except OSError, (errno, errMsg):
         msg = "Error in filesystem call:" + str(errMsg)
         _logger.error(msg)
+
+    ### sort the files
+    files = sorted(files, key=lambda x: (str(x['dirname']).lower(), str(x['name']).lower()))
 
     return files, output, tardir
 
