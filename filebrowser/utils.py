@@ -713,7 +713,10 @@ def list_file_directory(logdir):
     ### sort the files
     files = sorted(files, key=lambda x: (str(x['dirname']).lower(), str(x['name']).lower()))
 
-    return files, output, tardir
+    if status != 0:
+        return files, output, tardir
+    else:
+        return files, '', tardir
 
 
 def fetch_file(pfn, guid):
