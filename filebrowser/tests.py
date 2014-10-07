@@ -16,7 +16,8 @@ get_rucio_metalink_file, get_surls_from_rucio_metalink_file, \
 get_rucio_pfns_from_guids_with_rucio_metalink_file, fetch_file, \
 get_rucio_redirect_url, get_location_from_rucio_redirect_output, \
 get_rucio_redirect_response, get_rucio_pfns_from_guids_with_rucio_redirect, \
-get_rucio_pfns_from_guids_with_dq2client
+get_rucio_pfns_from_guids_with_dq2client, \
+get_filebrowser_hostname
 
 
 
@@ -36,6 +37,20 @@ class SimpleFileBrowserTest(unittest.TestCase):
         """
         vo = get_filebrowser_vo()
         self.assertEqual(vo, getattr(settings, "FILEBROWSER_VO", "atlas"))
+
+
+    @unittest.skip('skipping on purpose')
+    def test_settings_hostname(self):
+        """
+            test_settings_hostname
+            
+            Test that FILEBROWSER_HOSTNAME is defined in settings, 
+            and that its value is retrieved correctly in get_filebrowser_hostname
+            
+        """
+        hostname = get_filebrowser_hostname()
+        self.assertEqual(hostname, getattr(settings, "FILEBROWSER_HOSTNAME", \
+                                           commands.getoutput('hostname')))
 
 
     @unittest.skip('skipping on purpose')
