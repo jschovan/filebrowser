@@ -1,4 +1,4 @@
 include *.txt *.py *.cfg 
 recursive-include filebrowser *-template
-global-include *.html *.js *.css *.png *.gif *.ico *-example* *.txt 
+global-include *.html *.js *.css *.png *.gif *.ico *-example* *.txt LICENSE
 
