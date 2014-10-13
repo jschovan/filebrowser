@@ -719,7 +719,7 @@ def list_file_directory(logdir):
         return files, '', tardir
 
 
-def fetch_file(pfn, guid):
+def fetch_file(pfn, guid, unpack=True, listfiles=True):
     """
         fetch_file
             ... Download the file with pfn.
@@ -749,17 +749,21 @@ def fetch_file(pfn, guid):
         _logger.error(msg)
         errtxt += msg
 
-    ### untar the file
-    status, err = unpack_file(fname)
-    if status != 0:
-        msg = 'File unpacking failed for file [%s].' % (fname)
-        _logger.error(msg)
+    if unpack:
+        ### untar the file
+        status, err = unpack_file(fname)
+        if status != 0:
+            msg = 'File unpacking failed for file [%s].' % (fname)
+            _logger.error(msg)
 
-    ### list the files
-    files, err, tardir = list_file_directory(dir)
-    if len(err):
-        msg = 'File listing failed for file [%s]: [%s].' % (fname, err)
-        _logger.error(msg)
+    tardir = ''
+    files = ''
+    if listfiles:
+        ### list the files
+        files, err, tardir = list_file_directory(dir)
+        if len(err):
+            msg = 'File listing failed for file [%s]: [%s].' % (fname, err)
+            _logger.error(msg)
 
     ### urlbase
     urlbase = get_filebrowser_directory() + '/' + guid.lower()

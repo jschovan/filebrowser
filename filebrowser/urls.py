@@ -12,4 +12,5 @@ import views as filebrowser_views
 
 urlpatterns = patterns('',
     url(r'^$', filebrowser_views.index, name='filebrowser'),
+    url(r'^api/$', filebrowser_views.api_single_pandaid, name='filebrowser-api-single-pandaid'),
 )
